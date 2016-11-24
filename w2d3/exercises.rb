@@ -44,3 +44,14 @@ def clever(arr)
   end
   longest_fish
 end
+
+def slow_dance(move, arr)
+  arr.each_with_index do |dir, idx|
+    return idx if move == dir
+  end
+end
+
+
+def fast_dance(move, dir_hash)
+  return dir_hash[move]
+end
