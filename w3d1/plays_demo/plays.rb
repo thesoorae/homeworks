@@ -49,7 +49,7 @@ class Play
     SQL
   end
 
-  def find_by_title(title)
+  def self.find_by_title(title)
     PlayDBConnection.instance.execute(<<-SQL, title)
     SELECT
       *
@@ -60,22 +60,25 @@ class Play
     SQL
   end
 
-  def find_by_playwright(name)
+  def self.find_by_playwright(name)
     PlayDBConnection.instance.execute(<<-SQL, name)
     SELECT
     plays.title
     FROM
     plays
-    JOIN playwrights ON (plays.playwright_id == playwrights.id)
+    JOIN playwrights ON (plays.playwright_id = playwrights.id)
     WHERE
-    playwrights.name = name 
+    playwrights.name = ?
     SQL
   end
+end
 
 class Playwright
+  attr_accessor :name, :birth_year
+
   def self.all
     data = PlayDBConnection.instance.execute("SELECT * FROM playwrights")
-    data.map { |datum| Playright.new(datum)}
+    data.map { |datum| Playwright.new(datum)}
   end
 
   def initialize(options)
@@ -84,13 +87,22 @@ class Playwright
     @birth_year = options['birth_year']
   end
 
+  def self.access(name)
+    self.all.each do |playwright|
+      return playwright if playwright.name = name
+    end
+  end
+
+
+
+
   def create
     raise "#{self} already in database" if @id
     PlayDBConnection.instance.execute(<<-SQL, @name, @birth_year)
     INSERT INTO
-      playwrights
+      playwrights  (name, birth_year)
     VALUES
-      (?, ?)
+      (?,?)
       SQL
       @id = PlayDBConnection.instance.last_insert_row_id
   end
@@ -110,11 +122,11 @@ class Playwright
   def get_plays
     PlayDBConnection.instance.execute(<<-SQL, @id)
     SELECT
-      *
+      plays.*
     FROM
       plays
     WHERE
-      playwright_id = ?
+     plays.playwright_id = ?
     SQL
   end
 
